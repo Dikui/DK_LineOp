@@ -30,3 +30,62 @@
 *.exe
 *.out
 *.app
+
+# —————— 构建目录 & CMake 输出 ——————
+# 通常把整个 build 目录忽略
+/build*/
+# CMake 自己生成的文件夹和中间文件
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+Makefile
+# 如果你开启了 compile_commands.json
+compile_commands.json
+
+# —————— 二进制和库文件 ——————
+# 可执行文件
+*.exe
+*.out
+# Windows 动态库
+*.dll
+# Unix 动态库
+*.so
+*.dylib
+# 静态库
+*.a
+*.lib
+
+# —————— 对象文件 & 日志 ——————
+*.o
+*.obj
+*.lo
+*.log
+
+# —————— 临时文件 & 编辑器缓存 ——————
+# vim / emacs
+*~
+*.swp
+*.swo
+# VSCode
+.vscode/
+# CLion / IntelliJ 系列
+.idea/
+# Visual Studio
+*.vcxproj*
+*.sln
+*.user
+
+# —————— 操作系统产生的垃圾 ——————
+# macOS
+.DS_Store
+# Windows
+Thumbs.db
+desktop.ini
+
+# —————— 如果有其他语言或依赖目录 ——————
+# Python
+__pycache__/
+*.py[cod]
+# Node.js
+node_modules/

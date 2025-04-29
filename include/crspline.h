@@ -5,52 +5,50 @@
 
 namespace dk_line_op {
 
-template <int, Dim>
+template <int Dim>
 class CRSpline : public Line<Dim> {
  public:
+  using Base = Line<Dim>;
+
   CRSpline() {};
-  bool setControlPoints(const double* const* i_ctrl_pts, const size_t pts_size);
-  bool setTau(const double& i_tau);
+  CRSpline(const double* const* i_ctrl_pts, const size_t& i_pts_size,
+           const double& i_tau = 0.5) {
+    if (!setControlPoints(i_ctrl_pts, i_pts_size) || !setTau(i_tau)) {
+      this->reset();
+    }
+  }
+
+  void reset() {
+    this->ctrl_pts_num_ = 0;
+    this->ctrl_pts_.clear();
+    this->tau_ = 0.5;
+    M_.setZero();
+  }
+
+  bool setControlPoints(const double* const* i_ctrl_pts,
+                        const size_t& i_pts_size) {
+    this->ctrl_pts_num_ = i_pts_size;
+    this->ctrl_pts_.resize(i_pts_size);
+    for (size_t i = 0; i < i_pts_size; ++i) {
+      this->ctrl_pts_[i] = Eigen::Map<typename Base::VecD const>(i_ctrl_pts[i]);
+    }
+    return true;
+  }
+
+  bool setTau(const double& i_tau) {
+    if (tau_ != i_tau) {
+      tau_ = i_tau;
+      M_ << 0, 1, 0, 0, -tau_, 0, tau_, 0, 2 * tau_, tau_ - 3, 3 - 2 * tau_,
+          -tau_, -tau_, 2 - tau_, tau_ - 2, tau_;
+    }
+    return true;
+  }
 
  private:
-  double tau = 0.5;
-  Eigen::Matrix4d M = Eigen::Matrix4d::Zero();
+  double tau_ = 0.5;
+  Eigen::Matrix4d M_ = Eigen::Matrix4d::Zero();
 };
 
 }  // namespace dk_line_op
 
 #endif  // CRSPLINE_H
-
-// CatMullRom_Spline() { ctrl_pts.reserve(20); }
-// CatMullRom_Spline(const std::vector<Point2DInfo>& i_ctrl_pts,
-//                   const double& i_tau = 0.5)
-//     : ctrl_pts(std::move(i_ctrl_pts)), tau(i_tau) {
-//   num_ctrl_pts = ctrl_pts.size();
-//   M << 0, 1, 0, 0, -tau, 0, tau, 0, 2 * tau, tau - 3, 3 - 2 * tau, -tau,
-//   -tau,
-//       2 - tau, tau - 2, tau;
-// }
-
-// void setTau(const double& i_tau) const {
-//   if (tau != i_tau) {
-//     tau = i_tau;
-//     dirty = true;
-//   }
-// };
-
-// const Eigen::Matrix4d& getM() const {
-//   if (dirty) {
-//     M << 0, 1, 0, 0, -tau, 0, tau, 0, 2 * tau, tau - 3, 3 - 2 * tau,
-//     -tau, -tau,
-//         2 - tau, tau - 2, tau;
-//     dirty = false;
-//   }
-//   return M;
-// }
-
-// private:
-// mutable bool dirty{true};
-// mutable double tau = 0.5;
-// int num_ctrl_pts = 0;
-// std::vector<Point2DInfo> ctrl_pts;
-// mutable Eigen::Matrix4d M = Eigen::Matrix4d::Zero();
