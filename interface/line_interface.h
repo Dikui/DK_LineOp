@@ -14,14 +14,14 @@ class Line {
 
   virtual ~Line() = default;
 
-  static Line* createLine(const double& lower_range, const double& upper_range);
+  static Line* createLine(const double& i_lower_range,
+                          const double& i_upper_range);
 
-  virtual bool setControlPoints(const double* const* control_pts,
-                                const size_t pts_size) = 0;
+  virtual bool setPoints(const double* const* i_pts,
+                         const size_t i_pts_size) = 0;
 
  protected:
-  int ctrl_pts_num_;
-  std::vector<VecD> ctrl_pts_;
+  std::vector<VecD> pts_;
 };
 
 }  // namespace dk_line_op

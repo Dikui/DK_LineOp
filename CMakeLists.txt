@@ -15,7 +15,6 @@ include_directories(
 
 # — 源文件列表 —
 set(DK_LINE_SOURCES
-  src/crspline.cpp
   src/line_static.cpp
 )
 
