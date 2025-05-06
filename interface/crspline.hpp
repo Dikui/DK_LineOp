@@ -1,7 +1,6 @@
 #ifndef CRSPLINE_HPP
 #define CRSPLINE_HPP
 
-#include "line_interface.h"
 #include "utils.hpp"
 
 namespace dk_line_op {
@@ -9,10 +8,11 @@ namespace dk_line_op {
 // 只有四个控制点组成，且类设计上只支持均匀分布
 template <int Dim>
 class CRSpline {
- public:
-  using VecD = typename Line<Dim>::VecD;
+  using Vec = VecD<Dim>;
 
+ public:
   CRSpline(const double& i_tau = 0.5) {
+    tau_ = i_tau;
     M_ << 0, 1, 0, 0, -tau_, 0, tau_, 0, 2 * tau_, tau_ - 3, 3 - 2 * tau_,
         -tau_, -tau_, 2 - tau_, tau_ - 2, tau_;
   }
@@ -27,9 +27,9 @@ class CRSpline {
   }
 
   // 采样
-  std::vector<VecD> samplePts(const std::vector<VecD>& i_ctrl_pts,
-                              const int& i_num_pts) {
-    std::vector<VecD> o_pts;
+  std::vector<Vec> samplePts(const std::vector<Vec>& i_ctrl_pts,
+                             const int& i_num_pts) const {
+    std::vector<Vec> o_pts;
     if (i_ctrl_pts.size() != 4) {
       return o_pts;
     }
@@ -52,8 +52,8 @@ class CRSpline {
   }
 
   // 求解
-  VecD getPt(const std::vector<VecD>& i_ctrl_pts, const double& u) {
-    VecD o_pt = Eigen::Matrix<double, Dim, 1>::Zero();
+  Vec getPt(const std::vector<Vec>& i_ctrl_pts, const double& u) const {
+    Vec o_pt = Eigen::Matrix<double, Dim, 1>::Zero();
     if (u < 0.0 || u > 1.0 || i_ctrl_pts.size() != 4) {
       return o_pt;
     }
@@ -71,51 +71,79 @@ class CRSpline {
   Eigen::Matrix4d M_ = Eigen::Matrix4d::Zero();
 };
 
-// 整条曲线包含size-3个CRSpline
 template <int Dim>
-class CRSplineList : public Line<Dim> {
+class CentripetalCRSpline {
+  using Vec = VecD<Dim>;
+
  public:
-  using VecD = typename Line<Dim>::VecD;
+  CentripetalCRSpline(const double& i_alpha = 0.0) { alpha_ = i_alpha; }
+  bool setAlpha(const double& i_alpha) { alpha_ = i_alpha; }
 
-  CRSplineList() {};
-  CRSplineList(const double* const* i_pts, const size_t& i_pts_size,
-               const double& i_tau = 0.5) {
-    if (!setPoints(i_pts, i_pts_size) || !setTau(i_tau)) {
-      this->reset();
+  double uj(const double& ui, const Vec& pt_i, const Vec& pt_j) const {
+    return ui + std::pow((pt_j - pt_i).norm(), alpha_);
+  }
+
+  // 采样
+  std::vector<Vec> samplePts(const std::vector<Vec>& i_ctrl_pts,
+                             const int& i_num_pts) const {
+    std::vector<Vec> o_pts;
+    if (i_ctrl_pts.size() != 4) {
+      return o_pts;
     }
-  }
+    o_pts.reserve(i_num_pts);
+    std::vector<double> u_list = linspace(0, 1, i_num_pts);
 
-  void reset() {
-    this->pts_.clear();
-    num_pts_size = 0;
-    tau_ = 0.5;
-  }
+    // 构造参数
+    const double u0 = 0.0;
+    const double u1 = uj(u0, i_ctrl_pts[0], i_ctrl_pts[1]);
+    const double u2 = uj(u1, i_ctrl_pts[1], i_ctrl_pts[2]);
+    const double u3 = uj(u2, i_ctrl_pts[2], i_ctrl_pts[3]);
 
-  bool setPoints(const double* const* i_pts, const size_t& i_pts_size) {
-    this->pts_.resize(i_pts_size);
-    for (size_t i = 0; i < i_pts_size; ++i) {
-      this->pts_[i] = Eigen::Map<VecD const>(i_pts[i]);
+    // 采样
+    for (auto& u : u_list) {
+      const Vec A1 = (u1 - u) / (u1 - u0) * i_ctrl_pts[0] +
+                     (u - u0) / (u1 - u0) * i_ctrl_pts[1];
+      const Vec A2 = (u2 - u) / (u2 - u1) * i_ctrl_pts[1] +
+                     (u - u1) / (u2 - u1) * i_ctrl_pts[2];
+      const Vec A3 = (u3 - u) / (u3 - u2) * i_ctrl_pts[2] +
+                     (u - u2) / (u3 - u2) * i_ctrl_pts[3];
+      const Vec B1 = (u2 - u) / (u2 - u0) * A1 + (u - u0) / (u2 - u0) * A2;
+      const Vec B2 = (u3 - u) / (u3 - u1) * A2 + (u - u1) / (u3 - u1) * A3;
+      const Vec o_pt = (u2 - u) / (u2 - u1) * B1 + (u - u1) / (u2 - u1) * B2;
+      o_pts.emplace_back(o_pt);
     }
-    num_pts_size = this->pts_.size();
-    return true;
+    return o_pts;
   }
 
-  bool setTau(const double& i_tau) {
-    if (tau_ != i_tau) {
-      tau_ = i_tau;
+  // 求解
+  Vec getPt(const std::vector<Vec>& i_ctrl_pts, const double& u) const {
+    Vec o_pt = Eigen::Matrix<double, Dim, 1>::Zero();
+    if (u < 0.0 || u > 1.0 || i_ctrl_pts.size() != 4) {
+      return o_pt;
     }
-    return true;
+
+    // 构造参数
+    const double u0 = 0.0;
+    const double u1 = uj(u0, i_ctrl_pts[0], i_ctrl_pts[1]);
+    const double u2 = uj(u1, i_ctrl_pts[1], i_ctrl_pts[2]);
+    const double u3 = uj(u2, i_ctrl_pts[2], i_ctrl_pts[3]);
+
+    // 求解
+    const Vec A1 = (u1 - u) / (u1 - u0) * i_ctrl_pts[0] +
+                   (u - u0) / (u1 - u0) * i_ctrl_pts[1];
+    const Vec A2 = (u2 - u) / (u2 - u1) * i_ctrl_pts[1] +
+                   (u - u1) / (u2 - u1) * i_ctrl_pts[2];
+    const Vec A3 = (u3 - u) / (u3 - u2) * i_ctrl_pts[2] +
+                   (u - u2) / (u3 - u2) * i_ctrl_pts[3];
+    const Vec B1 = (u2 - u) / (u2 - u0) * A1 + (u - u0) / (u2 - u0) * A2;
+    const Vec B2 = (u3 - u) / (u3 - u1) * A2 + (u - u1) / (u3 - u1) * A3;
+    o_pt = (u2 - u) / (u2 - u1) * B1 + (u - u1) / (u2 - u1) * B2;
+
+    return o_pt;
   }
-
-  const std::vector<VecD>& getCtrlPts() const { return this->pts_; }
-  const double& getTau() const { return tau_; }
-
-  // 重采样
-  std::vector<VecD> samplePts(const int& i_step_size) {}
 
  private:
-  int num_pts_size = 0;
-  double tau_ = 0.5;
+  double alpha_ = 0.0;
 };
 
 }  // namespace dk_line_op

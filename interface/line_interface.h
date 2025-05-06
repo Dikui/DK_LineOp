@@ -8,10 +8,13 @@
 namespace dk_line_op {
 
 template <int Dim>
-class Line {
- public:
-  using VecD = Eigen::Matrix<double, Dim, 1>;
+using VecD = Eigen::Matrix<double, Dim, 1>;
 
+template <int Dim>
+class Line {
+  using Vec = VecD<Dim>;
+
+ public:
   virtual ~Line() = default;
 
   static Line* createLine(const double& i_lower_range,
@@ -21,7 +24,7 @@ class Line {
                          const size_t i_pts_size) = 0;
 
  protected:
-  std::vector<VecD> pts_;
+  std::vector<Vec> pts_;
 };
 
 }  // namespace dk_line_op

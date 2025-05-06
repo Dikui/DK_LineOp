@@ -1,6 +1,8 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
+#include <numeric>
+
 #include "line_interface.h"
 
 namespace dk_line_op {
@@ -18,6 +20,44 @@ std::vector<double> linspace(const double& start, const double& end,
   }
   return o_u_list;
 }
+
+template <int Dim>
+std::vector<VecD<Dim>> uniformSample(const std::vector<double>& dists,
+                                     const std::vector<VecD<Dim>>& lists,
+                                     const double& step) {
+  std::vector<VecD<Dim>> samples;
+  // check
+  if (dists.empty() || lists.empty() || step <= 0.0 ||
+      dists.size() != lists.size()) {
+    return samples;
+  }
+
+  size_t idx = 0;
+
+  for (double s = dists.front(); s <= dists.back(); s += step) {
+    while (idx + 1 < dists.size() && dists[idx + 1] < s) {
+      ++idx;
+    }
+    if (idx + 1 == dists.size()) {
+      const double d_end_0 = dists[idx - 1];
+      const double d_end_1 = dists[idx];
+      const VecD<Dim> v_end_0 = lists[idx - 1];
+      const VecD<Dim> v_end_1 = lists[idx];
+      samples.emplace_back(v_end_1 + (s - d_end_1) * (v_end_1 - v_end_0) /
+                                         (d_end_1 - d_end_0));
+      continue;
+    }
+    const double d0 = dists[idx];
+    const double d1 = dists[idx + 1];
+    const double t = (d1 > d0 ? (s - d0) / (d1 - d0) : 0.0);
+    const VecD<Dim> v0 = lists[idx];
+    const VecD<Dim> v1 = lists[idx + 1];
+    samples.emplace_back(v0 + t * (v1 - v0));
+  }
+
+  return samples;
+}
+
 }  // namespace dk_line_op
 
 #endif  // UTILS_HPP
