@@ -6,9 +6,8 @@
 namespace dk_line_op {
 
 // 整条曲线包含size-3个CRSpline
-template <int Dim>
-class Spline : public Line<Dim> {
-  using Vec = typename Line<Dim>::Vec;
+class Spline : public Line<3> {
+  using Vec = typename Line<3>::Vec;
 
  public:
   Spline() {};
@@ -34,24 +33,8 @@ class Spline : public Line<Dim> {
 
   const std::vector<Vec>& getCtrlPts() const { return this->pts_; }
 
-  // 均匀重采样
-  bool samplePts(const double& i_step) {
-    if (this->pts_.size() <= 1) {
-      return false;
-    }
-    // get dists
-    std::vector<double> dists;
-    for (size_t i = 0; i < this->pts_.size(); ++i) {
-      if (i == 0) {
-        dists.emplace_back(0.0);
-      }
-      dists.emplace_back(dists.back() +
-                         (this->pts_[i] - this->pts_[i - 1]).norm());
-    }
-    // resample
-    this->pts_ = uniformSample(dists, this->pts_, i_step);
-    return true;
-  }
+  bool getSkeleton(const Vec& i_inital_pt,
+                   const std::vector<Vec>& i_origin_pts);
 
  private:
   int num_pts_size_ = 0;

@@ -1,3 +1,3 @@
-#include "../interface/lines_manager"
+#include "../interface/line_manager"
 
 namespace dk_line_op {}

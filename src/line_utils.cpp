@@ -1,9 +1,4 @@
-#ifndef UTILS_HPP
-#define UTILS_HPP
-
-#include <numeric>
-
-#include "line_interface.h"
+#include "../interface/line_utils.h"
 
 namespace dk_line_op {
 
@@ -58,6 +53,4 @@ std::vector<VecD<Dim>> uniformSample(const std::vector<double>& dists,
   return samples;
 }
 
-}  // namespace dk_line_op
-
-#endif  // UTILS_HPP
+}
