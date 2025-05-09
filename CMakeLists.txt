@@ -6,16 +6,17 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # — 头文件搜索路径 —
-# include/ 存放公有头文件
+# interface/ 存放公有头文件
 # thirdparty/eigen/ 存放 Eigen 源码（头文件）
 include_directories(
-  ${PROJECT_SOURCE_DIR}/include
+  ${PROJECT_SOURCE_DIR}/interface
   ${PROJECT_SOURCE_DIR}/thirdparty/eigen
 )
 
 # — 源文件列表 —
 set(DK_LINE_SOURCES
-  src/line_static.cpp
+  src/line_manager.cpp
+  src/line_interface.cpp
 )
 
 # — 构建静态库 —

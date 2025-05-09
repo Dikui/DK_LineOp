@@ -1,23 +1,18 @@
 #ifndef LINE_INTERFACE_H
 #define LINE_INTERFACE_H
 
+#include <numeric>
 #include <vector>
 
 #include "Eigen/Core"
 
 namespace dk_line_op {
 
-template <int Dim>
-using VecD = Eigen::Matrix<double, Dim, 1>;
+using Vec3 = Eigen::Matrix<double, 3, 1>;
 
-struct PolyLine {
-  Eigen::Matrix4d
-};
+struct Polyline {};
 
-template <int Dim>
 class Line {
-  using Vec = VecD<Dim>;
-
  public:
   virtual ~Line() = default;
 
@@ -25,8 +20,15 @@ class Line {
                          const size_t i_pts_size) = 0;
 
  protected:
-  std::vector<Vec> pts_;
+  std::vector<Vec3> pts_;
 };
+
+std::vector<double> linspace(const double& start, const double& end,
+                             const size_t& num);
+
+std::vector<Vec3> uniformSample(const std::vector<double>& dists,
+                                const std::vector<Vec3>& lists,
+                                const double& step);
 
 }  // namespace dk_line_op
 
