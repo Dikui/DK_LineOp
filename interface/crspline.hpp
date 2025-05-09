@@ -65,7 +65,7 @@ class CRSpline {
 
  private:
   double tau_ = 0.5;
-  Eigen::Matrix4d M_ = Eigen::Matrix4d::Zero();
+  Mat4 M_ = Mat4::Zero();
 };
 
 class CentripetalCRSpline {

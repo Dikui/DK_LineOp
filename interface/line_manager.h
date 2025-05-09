@@ -15,27 +15,27 @@ class Spline : public Line {
     }
   }
 
-  void reset() {
-    this->pts_.clear();
-    num_pts_size_ = 0;
-  }
+  void reset() { this->pts_.clear(); }
 
   bool setPoints(const double* const* i_pts, const size_t& i_pts_size) {
     this->pts_.resize(i_pts_size);
     for (size_t i = 0; i < i_pts_size; ++i) {
       this->pts_[i] = Eigen::Map<Vec3 const>(i_pts[i]);
     }
-    num_pts_size_ = this->pts_.size();
     return true;
   }
 
   const std::vector<Vec3>& getCtrlPts() const { return this->pts_; }
 
-  bool getSkeleton(const Vec3& i_inital_pt,
-                   const std::vector<Vec3>& i_origin_pts);
+  // 找出向外生长的点
+  std::vector<Vec3> getPtstoAdd(const std::vector<Vec3>& i_origin_pts);
+
+  // 生长
+  bool growLine(std::optional<Vec3> i_inital_pt,
+                const std::vector<Vec3>& i_origin_pts,
+                const Polyline& i_polyline);
 
  private:
-  int num_pts_size_ = 0;
 };
 
 }  // namespace dk_line_op
